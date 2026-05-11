@@ -1,0 +1,33 @@
+{
+  "_comment": "Machine-readable companion to design_spec.md. Single source of truth for canvas sizes and thresholds.",
+  "design_types": {
+    "flyer_us_letter":   {"w": 816,  "h": 1056, "shape": "rect",   "min_font_px": 10, "bleed_pct": 0.05},
+    "flyer_a4":          {"w": 794,  "h": 1123, "shape": "rect",   "min_font_px": 10, "bleed_pct": 0.05},
+    "business_card":     {"w": 336,  "h": 192,  "shape": "rect",   "min_font_px": 8,  "bleed_pct": 0.05},
+    "sticker_square":    {"w": 288,  "h": 288,  "shape": "rect",   "min_font_px": 8,  "bleed_pct": 0.03},
+    "sticker_round":     {"w": 288,  "h": 288,  "shape": "circle", "min_font_px": 8,  "bleed_pct": 0.03},
+    "poster":            {"w": 864,  "h": 1152, "shape": "rect",   "min_font_px": 10, "bleed_pct": 0.05},
+    "social_post_sq":    {"w": 1080, "h": 1080, "shape": "rect",   "min_font_px": 10, "bleed_pct": 0.0},
+    "social_post_story": {"w": 1080, "h": 1920, "shape": "rect",   "min_font_px": 10, "bleed_pct": 0.0},
+    "social_ad_lscape":  {"w": 1200, "h": 628,  "shape": "rect",   "min_font_px": 10, "bleed_pct": 0.0}
+  },
+  "validation": {
+    "min_overlap_px": 2,
+    "min_contrast_ratio": 3.0,
+    "canvas_size_tolerance_px": 1,
+    "required_roles": ["logo", "company-name"],
+    "company_name_substring_match": true,
+    "company_name_min_overlap": 0.8
+  },
+  "generation_targets": {
+    "flyer_us_letter":   2400,
+    "flyer_a4":          1200,
+    "business_card":     1800,
+    "sticker_square":    1500,
+    "sticker_round":     1500,
+    "poster":            1800,
+    "social_post_sq":    2400,
+    "social_post_story": 1200,
+    "social_ad_lscape":  1200
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "_comment": "Curated set of 20 Google Font families used in this pipeline. The model MAY ONLY pick from this list — system_prompts.py reads this file and enforces it. Weights are the subset we download and the only weights the model can use (don't ask for weight 300 of Inter if it's not in the list).",
+  "_fetched_via": "scripts/download_fonts.py — Google Fonts CSS API with Chrome UA",
+  "fonts": {
+    "Inter":            {"category": "sans",    "weights": [400, 600, 700]},
+    "Manrope":          {"category": "sans",    "weights": [400, 600, 700]},
+    "DM Sans":          {"category": "sans",    "weights": [400, 700]},
+    "IBM Plex Sans":    {"category": "sans",    "weights": [400, 700]},
+    "Space Grotesk":    {"category": "sans",    "weights": [400, 600, 700]},
+    "Work Sans":        {"category": "sans",    "weights": [400, 600, 700]},
+    "Plus Jakarta Sans":{"category": "sans",    "weights": [400, 600, 700]},
+
+    "Bebas Neue":       {"category": "display", "weights": [400]},
+    "Anton":            {"category": "display", "weights": [400]},
+    "Archivo Black":    {"category": "display", "weights": [400]},
+    "Oswald":           {"category": "display", "weights": [400, 700]},
+    "Syne":             {"category": "display", "weights": [600, 700, 800]},
+
+    "IBM Plex Serif":   {"category": "serif",   "weights": [400, 700]},
+    "Source Serif 4":   {"category": "serif",   "weights": [400, 700]},
+    "Playfair Display": {"category": "serif",   "weights": [400, 700]},
+    "Crimson Pro":      {"category": "serif",   "weights": [400, 700]},
+
+    "JetBrains Mono":   {"category": "mono",    "weights": [400, 700]},
+    "IBM Plex Mono":    {"category": "mono",    "weights": [400, 700]},
+    "Space Mono":       {"category": "mono",    "weights": [400, 700]},
+    "Fira Code":        {"category": "mono",    "weights": [400, 700]}
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "smoke01",
+  "design_type": "business_card",
+  "brief": {
+    "vertical": "b2b devtools saas",
+    "audience": "vp / head of devops",
+    "company_name": "Pivotline",
+    "logo_concept": "geometric arrow mark in indigo, beside sans-serif wordmark",
+    "value_prop": "Cut CI runtime by 50%",
+    "tone": "premium / enterprise",
+    "palette_name": "cool tech",
+    "palette_hex": ["#0a0e27", "#1e3a8a", "#3b82f6", "#bfdbfe", "#f1f5f9"],
+    "layout": "asymmetric_split",
+    "content_template": {"surface": "exec_card"}
+  },
+  "html": "<!doctype html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>business_card</title>\n  <style>\n    html, body { margin: 0; padding: 0; }\n    body { width: 336px; height: 192px; overflow: hidden; position: relative; font-family: 'Segoe UI', Roboto, Arial, sans-serif; background: #f1f5f9; color: #0a0e27; }\n    .left { position: absolute; left: 0; top: 0; width: 110px; height: 100%; background: #0a0e27; display: flex; align-items: center; justify-content: center; }\n    .right { position: absolute; left: 130px; top: 20px; right: 16px; bottom: 16px; }\n    .lockup { display: flex; align-items: center; gap: 6px; margin-bottom: 16px; }\n    .wordmark { font-size: 14px; font-weight: 700; letter-spacing: 0.2px; color: #0a0e27; }\n    .name { font-size: 17px; font-weight: 600; margin: 0 0 1px 0; line-height: 1.1; }\n    .role { font-size: 10px; color: #1e3a8a; letter-spacing: 1.5px; text-transform: uppercase; margin: 0 0 12px 0; }\n    .contact { font-size: 9px; line-height: 1.7; color: #0a0e27; }\n  </style>\n</head>\n<body data-design-type=\"business_card\" data-canvas-w=\"336\" data-canvas-h=\"192\">\n  <div class=\"left\">\n    <svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" aria-label=\"logo\">\n      <polygon points=\"4,44 24,4 44,44\" fill=\"#3b82f6\"/>\n      <polygon points=\"14,44 24,24 34,44\" fill=\"#0a0e27\"/>\n    </svg>\n  </div>\n  <div class=\"right\">\n    <div class=\"lockup\" data-role=\"logo\" aria-label=\"logo\">\n      <svg width=\"14\" height=\"14\" viewBox=\"0 0 14 14\"><polygon points=\"1,13 7,1 13,13\" fill=\"#1e3a8a\"/></svg>\n      <span class=\"wordmark\" data-role=\"company-name\">Pivotline</span>\n    </div>\n    <p class=\"name\">Mira Okonkwo</p>\n    <p class=\"role\">VP Customer Engineering</p>\n    <div class=\"contact\" data-role=\"contact\">\n      mira@pivotline.com<br>\n      +1 (415) 555-0184<br>\n      pivotline.com\n    </div>\n  </div>\n</body>\n</html>",
+  "_expected": "valid"
+}

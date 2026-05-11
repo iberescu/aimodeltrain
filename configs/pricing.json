@@ -1,0 +1,20 @@
+{
+  "_comment": "Per-model pricing for cost reporting. Verify against https://ai.google.dev/gemini-api/docs/pricing if rates drift. All prices in USD per 1,000,000 tokens.",
+  "_fetched": "2026-05-11 from ai.google.dev/gemini-api/docs/pricing.md.txt",
+  "models": {
+    "gemini-3.1-pro-preview": {
+      "tier": "standard",
+      "input_per_million":  {"le_200k": 2.00,  "gt_200k": 4.00},
+      "output_per_million": {"le_200k": 12.00, "gt_200k": 18.00},
+      "cache_hit_per_million": {"le_200k": 0.20, "gt_200k": 0.40},
+      "notes": "Output price INCLUDES thinking tokens. Tier breakpoint at 200,000 prompt tokens. Batch tier is 50% cheaper but adds latency; we use standard."
+    },
+    "claude-opus-4-7": {
+      "tier": "standard",
+      "input_per_million":  {"flat": 15.00},
+      "output_per_million": {"flat": 75.00},
+      "cache_hit_per_million": {"flat": 1.50},
+      "notes": "Approximate — only relevant if we ever switch the judge to cross-vendor."
+    }
+  }
+}

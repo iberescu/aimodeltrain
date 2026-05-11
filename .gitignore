@@ -1,0 +1,42 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.env.*
+
+# generated artifacts — never commit
+data/raw/
+data/validated/
+data/rejected/
+data/sft/
+data/dpo/
+data/_archive_*/
+data/*.json
+renders/
+logs/
+
+# font binaries — re-fetchable via `python scripts/download_fonts.py`.
+# Metrics extracted from them ARE committed (configs/font_metrics.json).
+fonts/
+
+# smoke-test working directory (recreated by scripts/smoketest.ps1)
+samples_handcrafted/_run/
+samples_handcrafted/_out/
+
+# Claude/IDE state
+.claude/
+.idea/
+.vscode/
+
+# OS junk
+Thumbs.db
+.DS_Store
+
+# but keep the directory structure for the generated dirs
+!data/raw/.gitkeep
+!data/validated/.gitkeep
+!data/rejected/.gitkeep
+!data/sft/.gitkeep
+!data/dpo/.gitkeep
+!renders/.gitkeep
+!logs/.gitkeep

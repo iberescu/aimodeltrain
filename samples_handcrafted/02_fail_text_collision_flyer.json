@@ -1,0 +1,19 @@
+{
+  "id": "smoke02",
+  "design_type": "flyer_us_letter",
+  "brief": {
+    "vertical": "observability platform",
+    "audience": "cto / vp engineering",
+    "company_name": "Vertex OS",
+    "logo_concept": "abstract triangle icon in mint, above the wordmark",
+    "value_prop": "Drop incident MTTR by 70%",
+    "tone": "bold / disruptive",
+    "palette_name": "electric mint",
+    "palette_hex": ["#062b2b", "#0e7c7b", "#2dd4bf", "#cdf3ec", "#f4fbfa"],
+    "layout": "centered_hero",
+    "content_template": {"surface": "webinar_invite"}
+  },
+  "html": "<!doctype html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>flyer_us_letter</title>\n  <style>\n    html, body { margin: 0; padding: 0; }\n    body { width: 816px; height: 1056px; overflow: hidden; position: relative; background: #062b2b; color: #f4fbfa; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }\n    .logo-lockup { position: absolute; left: 60px; top: 60px; display: flex; align-items: center; gap: 10px; }\n    .wordmark { font-size: 22px; font-weight: 700; color: #f4fbfa; letter-spacing: 0.5px; }\n    .headline { position: absolute; left: 60px; top: 320px; width: 700px; font-size: 96px; line-height: 1; color: #2dd4bf; font-weight: 800; }\n    /* deliberately overlapping subtitle */\n    .subtitle { position: absolute; left: 80px; top: 360px; width: 600px; font-size: 64px; line-height: 1; color: #cdf3ec; font-weight: 700; }\n    .date { position: absolute; left: 60px; bottom: 80px; font-size: 24px; color: #cdf3ec; }\n  </style>\n</head>\n<body data-design-type=\"flyer_us_letter\" data-canvas-w=\"816\" data-canvas-h=\"1056\">\n  <div class=\"logo-lockup\" data-role=\"logo\" aria-label=\"logo\">\n    <svg width=\"40\" height=\"40\" viewBox=\"0 0 40 40\"><polygon points=\"4,36 20,4 36,36\" fill=\"#2dd4bf\"/></svg>\n    <span class=\"wordmark\" data-role=\"company-name\">Vertex OS</span>\n  </div>\n  <h1 class=\"headline\">FROM ALERT TO FIX</h1>\n  <h2 class=\"subtitle\">In Under 5 Minutes</h2>\n  <p class=\"date\" data-role=\"cta\">Live webinar &middot; June 12 &middot; 11am PT &middot; vertexos.com/webinar</p>\n</body>\n</html>",
+  "_expected": "invalid",
+  "_expected_violation": "text_collision"
+}

@@ -1,0 +1,19 @@
+{
+  "id": "smoke03",
+  "design_type": "sticker_round",
+  "brief": {
+    "vertical": "compliance automation saas",
+    "audience": "head of compliance",
+    "company_name": "Statera",
+    "logo_concept": "monogram 'S' in white inside a forest-green circle, beside the wordmark",
+    "value_prop": "SOC 2 in 30 days",
+    "tone": "trust / compliance",
+    "palette_name": "forest moss",
+    "palette_hex": ["#1b3a2c", "#3d6b4c", "#7ba17b", "#cfe1cf", "#f4f7f1"],
+    "layout": "centered_hero",
+    "content_template": {"surface": "circular_brand_mark"}
+  },
+  "html": "<!doctype html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>sticker_round</title>\n  <style>\n    html, body { margin: 0; padding: 0; }\n    body { width: 288px; height: 288px; overflow: hidden; position: relative; clip-path: circle(50%); background: #1b3a2c; color: #f4f7f1; font-family: Georgia, serif; }\n    .lockup { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 10px; }\n    .monogram { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 22px; }\n    .wordmark { font-size: 28px; letter-spacing: 1px; font-weight: 600; }\n    /* deliberately placed where corners exit the inscribed circle */\n    .footer { position: absolute; left: 14px; right: 14px; bottom: 6px; text-align: center; font-size: 18px; color: #cfe1cf; }\n  </style>\n</head>\n<body data-design-type=\"sticker_round\" data-canvas-w=\"288\" data-canvas-h=\"288\">\n  <div class=\"lockup\" data-role=\"logo\" aria-label=\"logo\">\n    <svg width=\"44\" height=\"44\" viewBox=\"0 0 44 44\" aria-label=\"monogram\">\n      <circle cx=\"22\" cy=\"22\" r=\"22\" fill=\"#f4f7f1\"/>\n      <text x=\"22\" y=\"30\" text-anchor=\"middle\" font-family=\"Georgia, serif\" font-size=\"22\" font-weight=\"700\" fill=\"#1b3a2c\">S</text>\n    </svg>\n    <div class=\"wordmark\" data-role=\"company-name\">Statera</div>\n  </div>\n  <div class=\"footer\">SOC 2 IN 30 DAYS &middot; EST 2022</div>\n</body>\n</html>",
+  "_expected": "invalid",
+  "_expected_violation": "outside_circle_text"
+}
