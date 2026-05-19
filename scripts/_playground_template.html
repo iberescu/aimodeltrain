@@ -1,0 +1,894 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>aimodeltrain — Qwen3.6 LoRA playground</title>
+<style>
+  :root {
+    --bg: #0b0d12; --panel: #141823; --panel-2: #1c2230;
+    --border: #262d3d; --fg: #e6e9ef; --fg-dim: #9aa3b2;
+    --accent: #6ea8fe; --good: #4ade80; --bad: #f87171; --warn: #fbbf24;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg);
+               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+               font-size: 13.5px; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--panel);
+           border-bottom: 1px solid var(--border); padding: 10px 18px;
+           display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  header h1 { font-size: 15px; margin: 0; font-weight: 600; letter-spacing: 0.3px; }
+  header h1 .dim { color: var(--fg-dim); font-weight: 400; }
+  .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-left: auto; }
+  button, select, input[type=text], input[type=password], textarea {
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--fg);
+    padding: 6px 10px; border-radius: 6px; font-size: 13px; font-family: inherit;
+  }
+  button { cursor: pointer; }
+  button.primary { background: var(--accent); color: #0a0c11; border-color: var(--accent); font-weight: 600; }
+  button.primary:hover { filter: brightness(1.1); }
+  button.danger { background: transparent; color: var(--bad); border-color: var(--bad); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .config-bar { background: var(--panel); border-bottom: 1px solid var(--border);
+                padding: 8px 18px; font-size: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .config-bar input { flex: 1; min-width: 200px; }
+  .config-bar .status { font-size: 11px; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); color: var(--fg-dim); }
+  .config-bar .status.ok { color: var(--good); border-color: rgba(74,222,128,.4); background: rgba(74,222,128,.08); }
+  .config-bar .status.bad { color: var(--bad); border-color: rgba(248,113,113,.4); background: rgba(248,113,113,.08); }
+  main { display: grid; grid-template-columns: 360px 1fr; gap: 0; height: calc(100vh - 96px); }
+  @media (max-width: 980px) { main { grid-template-columns: 1fr; height: auto; } }
+  .left { padding: 14px 18px; overflow: auto; border-right: 1px solid var(--border); }
+  .right { padding: 14px 18px; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
+  .row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+  .row label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--fg-dim); font-weight: 500; }
+  .row select, .row input, .row textarea { width: 100%; }
+  textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; resize: vertical; }
+  .palette-pre { display: flex; gap: 4px; margin-top: 4px; }
+  .palette-pre span { width: 22px; height: 22px; border-radius: 4px; border: 1px solid var(--border); }
+  .generate-row { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+  .stats { display: flex; gap: 14px; font-size: 11.5px; color: var(--fg-dim); flex-wrap: wrap; align-items: center; }
+  .stats .num { color: var(--fg); font-variant-numeric: tabular-nums; }
+  .preview-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px; flex: 1; min-height: 360px; display: flex; flex-direction: column; gap: 8px; }
+  .preview-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  .preview-tabs .tab { padding: 4px 10px; cursor: pointer; color: var(--fg-dim); font-size: 12px; border-bottom: 2px solid transparent; user-select: none; }
+  .preview-tabs .tab.active { color: var(--fg); border-bottom-color: var(--accent); }
+  .iframe-frame { background: #fff; flex: 1; overflow: auto; display: flex; align-items: start; justify-content: center; padding: 12px; }
+  .iframe-frame iframe { border: 1px solid var(--border); background: #fff; }
+  pre.code { background: #0a0c11; border: 1px solid var(--border); border-radius: 6px;
+             padding: 10px; font-size: 11.5px; line-height: 1.45; overflow: auto;
+             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+             flex: 1; white-space: pre-wrap; word-break: break-word; }
+  .history { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px; max-height: 240px; overflow: auto; }
+  .history h3 { margin: 0 0 6px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--fg-dim); font-weight: 500; }
+  .history-item { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; border-bottom: 1px dashed var(--border); font-size: 12px; cursor: pointer; }
+  .history-item:last-child { border-bottom: none; }
+  .history-item:hover { color: var(--accent); }
+  .history-item .h-meta { color: var(--fg-dim); font-size: 11px; }
+  .help { color: var(--fg-dim); font-size: 11.5px; margin: 6px 0; line-height: 1.45; }
+  details > summary { cursor: pointer; color: var(--fg-dim); font-size: 12px; user-select: none; }
+  details[open] > summary { color: var(--fg); }
+  hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  .toggle-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .toggle-row label { background: var(--panel-2); border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; cursor: pointer; font-size: 11.5px; }
+  .toggle-row input[type=radio] { display: none; }
+  .toggle-row input[type=radio]:checked + span { color: var(--accent); }
+  .badge { font-size: 10.5px; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); background: var(--panel-2); color: var(--fg-dim); }
+</style>
+</head>
+<body>
+<header>
+  <h1>aimodeltrain <span class="dim">— Qwen3.6 LoRA playground</span></h1>
+  <div class="controls">
+    <span id="model-info" class="badge">no endpoint</span>
+    <button id="clear-history" class="danger">clear history</button>
+  </div>
+</header>
+<section class="config-bar">
+  <span style="font-size:11px;color:var(--fg-dim);text-transform:uppercase;letter-spacing:.5px;">Endpoint</span>
+  <input id="endpoint-url" type="text" placeholder="https://<endpoint>.endpoints.huggingface.cloud/v1/chat/completions" autocomplete="off"/>
+  <span style="font-size:11px;color:var(--fg-dim);text-transform:uppercase;letter-spacing:.5px;">Token</span>
+  <input id="endpoint-token" type="password" placeholder="hf_…" autocomplete="off"/>
+  <button id="save-config">save</button>
+  <button id="health-check">ping</button>
+  <span id="config-status" class="status">unsaved</span>
+</section>
+<main>
+  <aside class="left">
+    <div class="row">
+      <label for="company">Brand</label>
+      <select id="company"></select>
+    </div>
+
+    <div class="row">
+      <label for="design-type">Design type</label>
+      <select id="design-type"></select>
+      <div class="help" id="canvas-hint">—</div>
+    </div>
+
+    <div class="row">
+      <label for="content-template">Content surface</label>
+      <select id="content-template"></select>
+    </div>
+
+    <div class="row">
+      <label for="tone">Tone</label>
+      <select id="tone"></select>
+    </div>
+
+    <div class="row">
+      <label for="layout">Layout archetype</label>
+      <select id="layout"></select>
+    </div>
+
+    <div class="row">
+      <label for="audience">Target audience</label>
+      <select id="audience"></select>
+    </div>
+
+    <div class="row">
+      <label for="value-prop">Value proposition</label>
+      <select id="value-prop"></select>
+      <input id="value-prop-custom" type="text" placeholder="…or type a custom one" style="margin-top:4px"/>
+    </div>
+
+    <hr/>
+
+    <div class="row">
+      <label>Brand palette (locked)</label>
+      <div class="palette-pre" id="palette-pre"></div>
+    </div>
+    <div class="row">
+      <label>Primary / secondary font</label>
+      <div id="font-info" class="help">—</div>
+    </div>
+
+    <hr/>
+
+    <div class="row">
+      <label>Model variant</label>
+      <div class="toggle-row">
+        <label><input type="radio" name="model-variant" value="dryrun" checked><span>dryrun (base + LoRA)</span></label>
+        <label><input type="radio" name="model-variant" value="aimt-dryrun"><span>aimt-dryrun (base only)</span></label>
+      </div>
+      <div class="help">"dryrun" applies the trained LoRA adapter; "aimt-dryrun" is plain Qwen3.6-27B.</div>
+    </div>
+
+    <div class="row">
+      <label>Thinking mode</label>
+      <div class="toggle-row">
+        <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="think-mode"><span>enable chain-of-thought (slower, leaks prose)</span></label>
+      </div>
+      <div class="help">Off by default. Qwen3's default thinking mode emits planning text before the HTML; we send chat_template_kwargs.enable_thinking=false to suppress it.</div>
+    </div>
+
+    <details>
+      <summary>Generation parameters</summary>
+      <div class="row" style="margin-top:8px">
+        <label for="max-tokens">max_tokens</label>
+        <input id="max-tokens" type="text" value="2048"/>
+        <div class="help">At ~30 tok/s on A100, every 1000 tokens is ~30 s. Lower for faster turns; raise for fuller designs.</div>
+      </div>
+      <div class="row">
+        <label for="temperature">temperature</label>
+        <input id="temperature" type="text" value="0.7"/>
+      </div>
+      <div class="row">
+        <label for="top-p">top_p</label>
+        <input id="top-p" type="text" value="0.95"/>
+      </div>
+      <div class="row">
+        <label for="stop">stop (comma-separated)</label>
+        <input id="stop" type="text" value="&lt;/html&gt;"/>
+        <div class="help">Sent to the server. Cuts off generation immediately when matched — saves time when the model knows to emit closing tags.</div>
+      </div>
+    </details>
+
+    <hr/>
+
+    <div class="generate-row">
+      <button id="generate" class="primary">Generate</button>
+      <button id="stop-gen" disabled>Stop</button>
+      <button id="show-prompt">View prompt</button>
+    </div>
+    <div class="stats" id="stats" style="margin-top:8px"></div>
+  </aside>
+
+  <section class="right">
+    <div class="preview-wrap">
+      <div class="preview-tabs">
+        <div class="tab active" data-view="render">Render</div>
+        <div class="tab" data-view="source">HTML source</div>
+        <div class="tab" data-view="prompt">Prompt sent</div>
+        <div class="tab" data-view="raw">Raw stream</div>
+        <div style="margin-left:auto;display:flex;gap:6px;">
+          <button id="copy-html">copy html</button>
+          <button id="download-html">download .html</button>
+        </div>
+      </div>
+      <div class="iframe-frame" id="preview-frame">
+        <iframe id="render-iframe" title="generated design" sandbox="allow-same-origin"></iframe>
+      </div>
+      <pre class="code" id="source-pre" style="display:none">(no output yet — click Generate)</pre>
+      <pre class="code" id="prompt-pre" style="display:none">(no prompt sent yet)</pre>
+      <pre class="code" id="raw-pre" style="display:none">(no stream yet — click Generate)</pre>
+    </div>
+    <div class="history">
+      <h3>History</h3>
+      <div id="history-list"><div class="help">no generations yet</div></div>
+    </div>
+  </section>
+</main>
+
+<script type="application/json" id="data">__DATA__</script>
+<script>
+(function () {
+  const DATA = JSON.parse(document.getElementById("data").textContent);
+  const els = {
+    company: document.getElementById("company"),
+    designType: document.getElementById("design-type"),
+    canvasHint: document.getElementById("canvas-hint"),
+    content: document.getElementById("content-template"),
+    tone: document.getElementById("tone"),
+    layout: document.getElementById("layout"),
+    audience: document.getElementById("audience"),
+    valueProp: document.getElementById("value-prop"),
+    valuePropCustom: document.getElementById("value-prop-custom"),
+    palette: document.getElementById("palette-pre"),
+    fontInfo: document.getElementById("font-info"),
+    maxTokens: document.getElementById("max-tokens"),
+    temperature: document.getElementById("temperature"),
+    topP: document.getElementById("top-p"),
+    stop: document.getElementById("stop"),
+    generate: document.getElementById("generate"),
+    stopGen: document.getElementById("stop-gen"),
+    showPrompt: document.getElementById("show-prompt"),
+    stats: document.getElementById("stats"),
+    endpointUrl: document.getElementById("endpoint-url"),
+    endpointToken: document.getElementById("endpoint-token"),
+    saveConfig: document.getElementById("save-config"),
+    healthCheck: document.getElementById("health-check"),
+    configStatus: document.getElementById("config-status"),
+    modelInfo: document.getElementById("model-info"),
+    iframe: document.getElementById("render-iframe"),
+    sourcePre: document.getElementById("source-pre"),
+    promptPre: document.getElementById("prompt-pre"),
+    rawPre: document.getElementById("raw-pre"),
+    previewFrame: document.getElementById("preview-frame"),
+    tabs: document.querySelectorAll(".preview-tabs .tab"),
+    copyHtml: document.getElementById("copy-html"),
+    downloadHtml: document.getElementById("download-html"),
+    historyList: document.getElementById("history-list"),
+    clearHistory: document.getElementById("clear-history"),
+  };
+
+  // ---------- Config (endpoint URL + token) persisted to localStorage ----------
+  // Whenever the page is regenerated with a new baked endpoint_url (e.g. we
+  // redeployed to a different Space/Endpoint), overwrite the stored value so
+  // the user doesn't keep talking to a stale URL. The user can still manually
+  // edit and `save` to override.
+  function loadConfig() {
+    const baked = (DATA.config || {});
+    const lastBakedUrl = localStorage.getItem("aimt_baked_url") || "";
+    const storedUrl = localStorage.getItem("aimt_endpoint_url") || "";
+    const storedTok = localStorage.getItem("aimt_endpoint_token") || "";
+    let url = storedUrl || baked.endpoint_url || "";
+    let tok = storedTok || baked.hf_token || "";
+    // If the page was built with a newer URL than we last saw, adopt it.
+    if (baked.endpoint_url && baked.endpoint_url !== lastBakedUrl) {
+      url = baked.endpoint_url;
+      localStorage.setItem("aimt_endpoint_url", url);
+      localStorage.setItem("aimt_baked_url", baked.endpoint_url);
+    }
+    els.endpointUrl.value = url;
+    els.endpointToken.value = tok;
+    if (url && !storedUrl) localStorage.setItem("aimt_endpoint_url", url);
+    if (tok && !storedTok) localStorage.setItem("aimt_endpoint_token", tok);
+    updateConfigStatus();
+  }
+  function saveConfig() {
+    localStorage.setItem("aimt_endpoint_url", els.endpointUrl.value.trim());
+    localStorage.setItem("aimt_endpoint_token", els.endpointToken.value.trim());
+    updateConfigStatus();
+  }
+  function updateConfigStatus() {
+    const ok = els.endpointUrl.value.trim() && els.endpointToken.value.trim();
+    els.configStatus.textContent = ok ? "saved" : "incomplete";
+    els.configStatus.className = "status " + (ok ? "ok" : "bad");
+  }
+  els.saveConfig.addEventListener("click", saveConfig);
+  loadConfig();
+
+  // ---------- Populate dropdowns ----------
+  DATA.companies.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c.company_name;
+    opt.textContent = c.company_name + " — " + c.vertical;
+    els.company.appendChild(opt);
+  });
+  Object.keys(DATA.design_specs).forEach(dt => {
+    const opt = document.createElement("option");
+    opt.value = dt; opt.textContent = dt;
+    els.designType.appendChild(opt);
+  });
+  DATA.tones.forEach(t => {
+    const opt = document.createElement("option");
+    opt.value = t; opt.textContent = t;
+    els.tone.appendChild(opt);
+  });
+  DATA.audience_personas.forEach(a => {
+    const opt = document.createElement("option");
+    opt.value = a; opt.textContent = a;
+    els.audience.appendChild(opt);
+  });
+
+  function selectedCompany() {
+    return DATA.companies.find(c => c.company_name === els.company.value);
+  }
+  function selectedSpec() {
+    return DATA.design_specs[els.designType.value];
+  }
+
+  // Per-design-type max_tokens defaults. Canvas size already bounds the
+  // natural HTML length, so we don't need 2048+ tokens for a business card.
+  // The user can manually override; values below are just smart starts.
+  const MAX_TOKENS_BY_TYPE = {
+    business_card:     1024,
+    sticker_square:    1024,
+    sticker_round:     1024,
+    social_ad_lscape:  1536,
+    social_post_sq:    1536,
+    social_post_story: 2048,
+    flyer_us_letter:   2560,
+    flyer_a4:          2560,
+    poster:            2560,
+  };
+
+  function refreshDependents() {
+    const c = selectedCompany();
+    if (!c) return;
+
+    // palette swatches
+    els.palette.innerHTML = "";
+    (c.palette_hex || []).forEach(h => {
+      const sw = document.createElement("span");
+      sw.style.background = h;
+      sw.title = h;
+      els.palette.appendChild(sw);
+    });
+    els.fontInfo.textContent = c.primary_font + (c.secondary_font && c.secondary_font !== c.primary_font ? " + " + c.secondary_font : " (same for body)");
+
+    // value-prop options
+    els.valueProp.innerHTML = "";
+    (c.value_props || []).forEach(v => {
+      const o = document.createElement("option");
+      o.value = v; o.textContent = v;
+      els.valueProp.appendChild(o);
+    });
+
+    // layouts (per design type prefs)
+    const dt = els.designType.value;
+    const layouts = DATA.type_layout_prefs[dt] || DATA.layout_archetypes;
+    els.layout.innerHTML = "";
+    layouts.forEach(l => {
+      const o = document.createElement("option");
+      o.value = l; o.textContent = l;
+      els.layout.appendChild(o);
+    });
+
+    // content templates per design type
+    els.content.innerHTML = "";
+    const templates = DATA.content_templates[dt] || [];
+    templates.forEach((t, i) => {
+      const o = document.createElement("option");
+      o.value = String(i);
+      o.textContent = t.surface || ("template " + (i + 1));
+      els.content.appendChild(o);
+    });
+
+    // canvas hint
+    const spec = selectedSpec();
+    if (spec) els.canvasHint.textContent = spec.w + " × " + spec.h + " (" + spec.shape + ", min font " + spec.min_font_px + "px)";
+
+    // Suggest a max_tokens for this design type unless the user has overridden.
+    const suggested = MAX_TOKENS_BY_TYPE[els.designType.value];
+    if (suggested && !els.maxTokens.dataset.userEdited) {
+      els.maxTokens.value = suggested;
+    }
+  }
+
+  els.company.addEventListener("change", refreshDependents);
+  els.designType.addEventListener("change", refreshDependents);
+  els.maxTokens.addEventListener("input", () => { els.maxTokens.dataset.userEdited = "1"; });
+
+  // Initial defaults
+  if (DATA.companies.length) els.company.value = DATA.companies[0].company_name;
+  els.designType.value = "business_card";
+  refreshDependents();
+
+  // ---------- Prompt rendering (mirrors generators/system_prompts.render_user_prompt) ----------
+  const SYSTEM_PROMPT = DATA.system_prompt;
+
+  function round3(x) { return Math.round(x * 1000) / 1000; }
+
+  function fontMetricsSummary(family, weight) {
+    const fam = DATA.font_metrics[family];
+    if (!fam) return "(no measured metrics for '" + family + "')";
+    let key = "weight_" + weight;
+    if (!(key in fam)) {
+      const keys = Object.keys(fam).sort();
+      if (!keys.length) return "(no metrics)";
+      key = keys[0];
+    }
+    const m = fam[key];
+    const cw = m.char_widths_em || {};
+    const order = ["M", "i", "W", "l", "n", "o", " "];
+    const parts = order.filter(c => c in cw).map(c => "'" + c + "'=" + round3(cw[c]));
+    return family + " " + key.replace("weight_", "w") + ": "
+         + "cap_height=" + round3(m.cap_height_em) + "em, "
+         + "x_height=" + round3(m.x_height_em) + "em, "
+         + "ascent=" + round3(m.ascent_em) + "em, "
+         + "descent=" + round3(m.descent_em) + "em, "
+         + "line_height_normal=" + round3(m.rendered_line_height_em) + "em, "
+         + "avg_char_advance=" + round3(m.avg_advance_em) + "em "
+         + "(English-weighted). Sample char widths (in em): " + parts.join(", ") + ".";
+  }
+
+  function lineFitExample(family, weight, targetFontPx, canvasW) {
+    const fam = DATA.font_metrics[family];
+    if (!fam) return "";
+    let key = "weight_" + weight;
+    if (!(key in fam)) {
+      const keys = Object.keys(fam).sort();
+      if (!keys.length) return "";
+      key = keys[0];
+    }
+    const m = fam[key];
+    const avgEm = m.avg_advance_em || 0;
+    const avgPx = avgEm * targetFontPx;
+    const chars = avgPx ? Math.floor(canvasW / avgPx) : 0;
+    return "Worked example: " + family + " at " + targetFontPx + "px averages "
+         + "~" + avgPx.toFixed(1) + "px per character. " + canvasW + "px of width fits roughly "
+         + chars + " characters per line.";
+  }
+
+  function renderUserPrompt(brief, spec) {
+    const ct = brief.content_template || {};
+    const contentLines = Object.entries(ct).map(([k, v]) =>
+      "  - " + k + ": " + (v === null ? "null" : (Array.isArray(v) ? JSON.stringify(v) : String(v)))
+    );
+    const shapeNote = spec.shape === "circle"
+      ? "\n- CANVAS IS A CIRCLE (round sticker). Add `clip-path: circle(50%)` to `body`. No text may cross the circle boundary."
+      : "";
+    const palette = brief.palette_hex;
+    const primary = brief.primary_font;
+    const secondary = brief.secondary_font || primary;
+
+    const targetPx = Math.max((spec.min_font_px || 10) * 3, 36);
+
+    return `# Brief
+
+Design a **${brief.design_type}** at exactly **${spec.w}px × ${spec.h}px**.
+
+## Brand identity (LOCKED — every asset for this company looks like this)
+
+The same fictional company has many designs in the training corpus. Brand
+consistency across assets matters more than per-design creativity. Use the
+EXACT palette and font specified here — do NOT invent new brand colors or
+swap to a different Google Font.
+
+- **Company name** (use exactly this string in the \`data-role="company-name"\`
+  element): **${brief.company_name}**
+- **Logo concept** (the brand mark — render in inline SVG; same brand mark
+  shape across all of this company's designs, only the size/placement may
+  change per design type): ${brief.logo_concept}
+- **Brand palette** (${brief.palette_name}) — use only these 5 colors. At
+  least 3 of them must appear in the rendered design (one as the dominant
+  background, at least one as accent / brand color, and one for text):
+    - \`${palette[0]}\` — darkest (often background or text on light)
+    - \`${palette[1]}\` — primary brand color
+    - \`${palette[2]}\` — accent / highlight
+    - \`${palette[3]}\` — light/tint
+    - \`${palette[4]}\` — lightest (often background on dark)
+- **Primary font** (use for the dominant text — headlines, hero, wordmark):
+  **${primary}**  — load from Google Fonts.
+- **Secondary font** (use for body / details if a different font is needed;
+  otherwise reuse the primary): **${secondary}**
+- DO NOT use any other Google Font for this design.
+
+### Font reference (FYI — NOT a layout recipe)
+
+The numbers below are reference data so you don't accidentally pick a
+font-size that overflows the canvas. They are **NOT** a design brief, a
+template, or instructions for what the layout must look like. Be as bold,
+asymmetric, expressive, surprising as the tone/layout call for — and use
+this only to sanity-check that your hero text actually fits, your body
+copy doesn't truncate, and a long string doesn't run off the side.
+
+- ${fontMetricsSummary(primary, 700)}
+- ${secondary !== primary ? fontMetricsSummary(secondary, 400) : "(secondary same as primary)"}
+
+Approximate fit check: ${lineFitExample(primary, 700, targetPx, spec.w)}
+
+This is a single rough benchmark — don't anchor your hero size to it. Pick
+the size the design wants; just glance at the avg_char_advance × your-size
+× string-length to make sure your longest line actually fits. Designs that
+"look formula-driven" or "feel templated" are worse than designs that risk
+a hair more whitespace. Be creative first, math-check second.
+
+## Audience & tone (varies per campaign — match these for the copy register)
+
+- B2B vertical: ${brief.vertical}
+- Target audience: ${brief.audience}
+- Value proposition (use as supporting copy where it fits): "${brief.value_prop}"
+- Tone for this specific asset: ${brief.tone}
+- Layout archetype: ${brief.layout}
+- Minimum font size: ${spec.min_font_px}px${shapeNote}
+
+## Required content surface
+
+This design is a **${ct.surface || "general"}**. Invent realistic B2B
+copy that fits this structure (use the locked company name above; invent
+the rest — names, dates, venues, numbers):
+${contentLines.join("\n")}
+
+Random seed for variation: ${brief.seed || Math.floor(Math.random() * 1e7) + 1}
+
+Emit the HTML now.`;
+  }
+
+  function buildBrief() {
+    const c = selectedCompany();
+    const dt = els.designType.value;
+    const tmplIdx = parseInt(els.content.value || "0", 10);
+    const tmpl = (DATA.content_templates[dt] || [])[tmplIdx] || {};
+    const vp = els.valuePropCustom.value.trim() || els.valueProp.value;
+    return {
+      design_type: dt,
+      company_name: c.company_name,
+      vertical: c.vertical,
+      logo_concept: c.logo_concept,
+      palette_name: c.palette_name,
+      palette_hex: c.palette_hex,
+      primary_font: c.primary_font,
+      secondary_font: c.secondary_font,
+      value_prop: vp,
+      audience: els.audience.value,
+      tone: els.tone.value,
+      layout: els.layout.value,
+      content_template: tmpl,
+      seed: Math.floor(Math.random() * 1e7) + 1,
+    };
+  }
+
+  function buildMessages() {
+    const brief = buildBrief();
+    const spec = DATA.design_specs[brief.design_type];
+    const user = renderUserPrompt(brief, spec);
+    return {
+      brief,
+      spec,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: user },
+      ],
+    };
+  }
+
+  // ---------- Tabs ----------
+  function showTab(name) {
+    els.tabs.forEach(t => t.classList.toggle("active", t.dataset.view === name));
+    els.previewFrame.style.display = name === "render" ? "" : "none";
+    els.sourcePre.style.display = name === "source" ? "" : "none";
+    els.promptPre.style.display = name === "prompt" ? "" : "none";
+    els.rawPre.style.display = name === "raw" ? "" : "none";
+  }
+  els.tabs.forEach(t => t.addEventListener("click", () => showTab(t.dataset.view)));
+
+  // ---------- Streaming generation ----------
+  let activeController = null;
+  let lastHtml = "";
+  let lastPromptText = "";
+
+  function sizeIframe(spec) {
+    if (!spec) return;
+    // Fit the iframe inside the visible preview frame at 1:1 with optional zoom
+    const frameRect = els.previewFrame.getBoundingClientRect();
+    const maxW = frameRect.width - 24, maxH = frameRect.height - 24;
+    const zoomW = maxW / spec.w;
+    const zoomH = maxH / spec.h;
+    const zoom = Math.min(1, zoomW, zoomH);
+    els.iframe.style.width = spec.w + "px";
+    els.iframe.style.height = spec.h + "px";
+    els.iframe.style.transformOrigin = "top left";
+    els.iframe.style.transform = "scale(" + zoom.toFixed(3) + ")";
+    // Reserve the un-scaled space
+    els.iframe.parentNode.style.minHeight = (spec.h * zoom + 24) + "px";
+  }
+
+  function renderInto(iframe, html) {
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(html);
+    doc.close();
+  }
+
+  async function generate() {
+    const url = els.endpointUrl.value.trim();
+    const tok = els.endpointToken.value.trim();
+    if (!url || !tok) {
+      alert("Configure the endpoint URL and token first (top bar).");
+      return;
+    }
+    const built = buildMessages();
+    lastPromptText = "SYSTEM:\n" + built.messages[0].content + "\n\nUSER:\n" + built.messages[1].content;
+    els.promptPre.textContent = lastPromptText;
+
+    sizeIframe(built.spec);
+    renderInto(els.iframe, "<html><body style='font-family:sans-serif;color:#999;padding:20px'>generating…</body></html>");
+    showTab("render");
+    els.sourcePre.textContent = "";
+    els.rawPre.textContent = "";
+    els.stats.innerHTML = "<span class='num'>0</span> tokens · waiting for first chunk…";
+
+    els.generate.disabled = true;
+    els.stopGen.disabled = false;
+    activeController = new AbortController();
+    const t0 = performance.now();
+    let firstChunkAt = null;
+    let tokenCount = 0;
+    let acc = "";
+    let rawLog = "";
+    let reasoningAcc = "";
+    const rawLine = (s) => {
+      rawLog += s + "\n";
+      // throttle UI updates to avoid layout thrash on long streams
+      if (els.rawPre && (rawLog.length - (els.rawPre._lastLen || 0) > 800 || s.startsWith("⟸") || s.startsWith("✖") || s.startsWith("✓"))) {
+        els.rawPre.textContent = rawLog;
+        els.rawPre._lastLen = rawLog.length;
+      }
+    };
+    const flushRaw = () => { if (els.rawPre) { els.rawPre.textContent = rawLog; els.rawPre._lastLen = rawLog.length; } };
+
+    const stopList = els.stop.value.split(",").map(s => s.trim()).filter(Boolean);
+    const variant = document.querySelector('input[name="model-variant"]:checked')?.value || "dryrun";
+    const thinkOn = document.getElementById("think-mode")?.checked || false;
+    const body = {
+      model: variant,
+      messages: built.messages,
+      stream: true,
+      max_tokens: parseInt(els.maxTokens.value, 10) || 4096,
+      temperature: parseFloat(els.temperature.value) || 0.7,
+      top_p: parseFloat(els.topP.value) || 0.95,
+      // Qwen3 series defaults to chain-of-thought "thinking" mode; the model
+      // emits planning prose before the actual HTML. We want the HTML only.
+      // vLLM forwards chat_template_kwargs to the tokenizer's chat template.
+      chat_template_kwargs: { enable_thinking: thinkOn },
+    };
+    if (stopList.length) body.stop = stopList;
+
+    rawLine("⟹ POST " + url);
+    rawLine("   model=" + body.model + "  max_tokens=" + body.max_tokens + "  temp=" + body.temperature + "  top_p=" + body.top_p + "  thinking=" + (body.chat_template_kwargs ? body.chat_template_kwargs.enable_thinking : "n/a"));
+    rawLine("   stop=" + JSON.stringify(body.stop || []));
+    rawLine("   messages=[system " + body.messages[0].content.length + " ch, user " + body.messages[1].content.length + " ch]");
+    rawLine("");
+
+    try {
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "text/event-stream",
+          "Authorization": "Bearer " + tok,
+        },
+        body: JSON.stringify(body),
+        signal: activeController.signal,
+      });
+
+      if (!resp.ok) {
+        const txt = await resp.text();
+        rawLine("✖ HTTP " + resp.status + " " + resp.statusText);
+        rawLine(txt.slice(0, 800));
+        flushRaw();
+        throw new Error("HTTP " + resp.status + " " + resp.statusText + " — " + txt.slice(0, 400));
+      }
+
+      rawLine("⟸ HTTP " + resp.status + " — streaming…");
+      rawLine("");
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buf = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let idx;
+        while ((idx = buf.indexOf("\n")) >= 0) {
+          const line = buf.slice(0, idx).trim();
+          buf = buf.slice(idx + 1);
+          if (!line || !line.startsWith("data:")) continue;
+          const data = line.slice(5).trim();
+          if (data === "[DONE]") { rawLine("[DONE]"); break; }
+          let chunk;
+          try { chunk = JSON.parse(data); } catch (e) {
+            rawLine("(parse failed) " + line.slice(0, 200));
+            continue;
+          }
+          const choice = (chunk.choices && chunk.choices[0]) || {};
+          const delta = (choice.delta && choice.delta.content) || "";
+          const reasoning = (choice.delta && (choice.delta.reasoning_content || choice.delta.reasoning)) || "";
+          const finish = choice.finish_reason;
+          if (reasoning) {
+            reasoningAcc += reasoning;
+            rawLine("[reasoning +" + reasoning.length + "] " + reasoning.slice(0, 200).replace(/\n/g, "\\n"));
+          }
+          if (finish) {
+            rawLine("[finish_reason=" + finish + "] usage=" + JSON.stringify(chunk.usage || {}));
+          }
+          if (!delta) continue;
+          if (firstChunkAt === null) firstChunkAt = performance.now();
+          acc += delta;
+          tokenCount += 1;
+          // Refresh source + stats every 8 chunks; refresh the iframe every 60
+          // (rendering partial HTML mid-stream is cheap visually but expensive
+          // on the browser's parser, so we throttle it).
+          if (tokenCount % 8 === 0) {
+            els.sourcePre.textContent = acc;
+            const elap = (performance.now() - t0) / 1000;
+            const tps = (tokenCount / elap).toFixed(1);
+            els.stats.innerHTML = "<span class='num'>" + tokenCount + "</span> chunks · "
+                                + elap.toFixed(1) + "s · " + tps + " ch/s · ttfb "
+                                + ((firstChunkAt - t0) / 1000).toFixed(2) + "s · "
+                                + acc.length.toLocaleString() + " chars";
+          }
+          if (tokenCount % 60 === 0) {
+            renderInto(els.iframe, acc + "</body></html>"); // close tags so the browser doesn't hang on incomplete markup
+          }
+        }
+      }
+    } catch (e) {
+      if (e.name === "AbortError") {
+        rawLine("✖ aborted by user");
+        els.sourcePre.textContent = acc + "\n\n— aborted —";
+      } else {
+        rawLine("✖ " + String(e.message || e));
+        flushRaw();
+        renderInto(els.iframe, "<html><body style='font-family:sans-serif;color:#c00;padding:20px'>error: " + escapeHtml(String(e.message || e)) + "</body></html>");
+        els.stats.innerHTML = "<span style='color:var(--bad)'>error</span> · " + escapeHtml(String(e.message || e)).slice(0, 300);
+        els.generate.disabled = false;
+        els.stopGen.disabled = true;
+        return;
+      }
+    }
+
+    lastHtml = acc;
+    els.sourcePre.textContent = acc || "(no content)";
+    if (acc) renderInto(els.iframe, acc);
+    const elapsed = (performance.now() - t0) / 1000;
+    rawLine("");
+    rawLine("✓ stream complete — " + tokenCount + " chunks · " + elapsed.toFixed(1) + "s · " + acc.length + " content chars" + (reasoningAcc ? " · " + reasoningAcc.length + " reasoning chars" : ""));
+    flushRaw();
+    els.stats.innerHTML = "<span class='num'>" + tokenCount + "</span> chunks · "
+                        + elapsed.toFixed(1) + "s · "
+                        + (tokenCount / elapsed).toFixed(1) + " chunks/s · ttfb "
+                        + (firstChunkAt ? ((firstChunkAt - t0) / 1000).toFixed(2) : "—") + "s · "
+                        + acc.length.toLocaleString() + " chars";
+
+    // Record history
+    pushHistory({
+      ts: new Date().toISOString(),
+      brief: built.brief,
+      html: acc,
+      chunks: tokenCount,
+      elapsed_s: elapsed,
+    });
+
+    els.generate.disabled = false;
+    els.stopGen.disabled = true;
+    activeController = null;
+  }
+
+  function escapeHtml(s) { return s.replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[m])); }
+
+  els.generate.addEventListener("click", generate);
+  els.stopGen.addEventListener("click", () => { if (activeController) activeController.abort(); });
+  els.showPrompt.addEventListener("click", () => {
+    const built = buildMessages();
+    lastPromptText = "SYSTEM:\n" + built.messages[0].content + "\n\nUSER:\n" + built.messages[1].content;
+    els.promptPre.textContent = lastPromptText;
+    showTab("prompt");
+  });
+
+  // ---------- History (localStorage) ----------
+  function loadHistory() {
+    try { return JSON.parse(localStorage.getItem("aimt_history") || "[]"); } catch (e) { return []; }
+  }
+  function saveHistory(h) { localStorage.setItem("aimt_history", JSON.stringify(h.slice(0, 50))); }
+  function pushHistory(entry) {
+    const h = loadHistory();
+    h.unshift(entry);
+    saveHistory(h);
+    renderHistory();
+  }
+  function renderHistory() {
+    const h = loadHistory();
+    if (!h.length) {
+      els.historyList.innerHTML = "<div class='help'>no generations yet</div>";
+      return;
+    }
+    els.historyList.innerHTML = "";
+    h.forEach((entry, i) => {
+      const row = document.createElement("div");
+      row.className = "history-item";
+      const left = document.createElement("div");
+      left.textContent = entry.brief.company_name + " · " + entry.brief.design_type;
+      const right = document.createElement("div");
+      right.className = "h-meta";
+      const ts = new Date(entry.ts).toLocaleTimeString();
+      right.textContent = ts + " · " + entry.html.length.toLocaleString() + " ch";
+      row.appendChild(left); row.appendChild(right);
+      row.addEventListener("click", () => {
+        lastHtml = entry.html;
+        els.sourcePre.textContent = entry.html;
+        const spec = DATA.design_specs[entry.brief.design_type];
+        sizeIframe(spec);
+        renderInto(els.iframe, entry.html);
+        showTab("render");
+      });
+      els.historyList.appendChild(row);
+    });
+  }
+  els.clearHistory.addEventListener("click", () => {
+    if (!confirm("clear all history?")) return;
+    localStorage.removeItem("aimt_history");
+    renderHistory();
+  });
+  renderHistory();
+
+  // ---------- Copy / Download ----------
+  els.copyHtml.addEventListener("click", () => {
+    if (!lastHtml) { alert("nothing to copy yet"); return; }
+    navigator.clipboard.writeText(lastHtml).then(() => {
+      els.copyHtml.textContent = "copied!";
+      setTimeout(() => els.copyHtml.textContent = "copy html", 1500);
+    });
+  });
+  els.downloadHtml.addEventListener("click", () => {
+    if (!lastHtml) { alert("nothing to download yet"); return; }
+    const blob = new Blob([lastHtml], { type: "text/html" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    const built = buildBrief();
+    a.download = (built.company_name || "design").toLowerCase().replace(/[^a-z0-9]+/g, "_") + "_" + built.design_type + ".html";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  // ---------- Health check ----------
+  els.healthCheck.addEventListener("click", async () => {
+    const url = els.endpointUrl.value.trim();
+    const tok = els.endpointToken.value.trim();
+    if (!url || !tok) { alert("set endpoint url + token first"); return; }
+    els.modelInfo.textContent = "pinging…";
+    try {
+      // Many TGI endpoints expose /v1/models or /info. Try /v1/models first.
+      const base = url.replace(/\/v1\/chat\/completions\/?$/, "").replace(/\/$/, "");
+      const r = await fetch(base + "/v1/models", { headers: { "Authorization": "Bearer " + tok }});
+      if (r.ok) {
+        const j = await r.json();
+        const ids = (j.data || []).map(m => m.id).join(", ") || "(unknown)";
+        els.modelInfo.textContent = "ok · " + ids;
+      } else {
+        els.modelInfo.textContent = "ping " + r.status;
+      }
+    } catch (e) {
+      els.modelInfo.textContent = "ping failed";
+    }
+  });
+
+  // Initial iframe sizing
+  setTimeout(() => sizeIframe(selectedSpec()), 60);
+  window.addEventListener("resize", () => sizeIframe(selectedSpec()));
+})();
+</script>
+</body>
+</html>

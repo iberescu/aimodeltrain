@@ -4,6 +4,11 @@ __pycache__/
 .env
 .env.*
 
+# Generated viewer/playground pages embed local tokens for ergonomics.
+# Never commit them.
+viewer.html
+playground.html
+
 # generated artifacts — never commit
 data/raw/
 data/validated/

@@ -1,0 +1,22 @@
+# Training-only deps. Installed inside the HF Jobs container, NOT locally.
+# (Local requirements.txt deliberately omits these so the dev box stays light.)
+
+# Core HF training stack.
+# Unpinned upper bound: Qwen/Qwen3.6-27B's config declares model_type=qwen3_5,
+# which only the transformers 5.x line knows. That requires torch>=2.7 because
+# of custom_op schema inference — so the HF Job MUST run on a pytorch>=2.7
+# image (we use pytorch/pytorch:2.9.1-cuda12.8-cudnn9-runtime).
+transformers>=4.55.0
+datasets>=3.0.0
+accelerate>=1.0.0
+peft>=0.14.0
+trl>=0.12.0
+
+# 4-bit quantization to fit Qwen3.6-27B on a single H100 (80GB)
+bitsandbytes>=0.44.0
+
+# Optional but useful
+wandb>=0.18.0  # only fires if WANDB_API_KEY is set in the job env
+sentencepiece>=0.2.0
+protobuf>=4.25.0
+huggingface-hub>=0.27.0
